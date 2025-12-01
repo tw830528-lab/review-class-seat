@@ -14,36 +14,37 @@
         .classroom { display: inline-block; padding: 15px; border: 2px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
         .seat-area { float: left; margin: 0 15px; }
         .stage { background-color: #333; color: white; padding: 12px; margin-bottom: 20px; font-weight: bold; border-radius: 3px; }
-        .aisle { width: 30px; border-right: 2px dashed #bbb; margin: 0 15px; }
+        .aisle { width: 40px; border-right: 2px dashed #bbb; margin: 0 15px; }
 
         /* 座位樣式 */
-        .seat-row { display: flex; justify-content: center; margin-bottom: 5px; }
+        .seat-row { display: flex; justify-content: center; margin-bottom: 8px; } /* 增加一點行距 */
         .seat {
-            width: 35px; height: 35px; line-height: 35px; 
-            margin: 3px; border: 2px solid #007bff; 
-            cursor: pointer; font-size: 11px; font-weight: bold;
-            background-color: #e6f3ff; /* 預設藍色: 可選 */
-            border-radius: 4px;
+            width: 40px; height: 40px; line-height: 40px; /* 稍微加大一點好點選 */
+            margin: 4px; border: 2px solid #007bff; 
+            cursor: pointer; font-size: 14px; font-weight: bold;
+            background-color: #e6f3ff; 
+            border-radius: 6px;
             transition: all 0.2s ease-in-out;
+            color: #d63384; /* 字體顏色改成類似圖片的紅色系 */
         }
         .seat.occupied { 
             background-color: #dc3545; /* 紅色: 已佔用 */
             color: white;
             cursor: not-allowed; 
             border-color: #dc3545; 
-            pointer-events: none; /* 禁用點擊 */
+            pointer-events: none; 
         }
         .seat.selected { 
             background-color: #ffc107; /* 黃色: 已選擇 */
             color: #333;
             border-color: #ff9800; 
-            transform: scale(1.05);
+            transform: scale(1.1);
         }
         .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255, 255, 255, 0.8); display: flex; justify-content: center; align-items: center; font-size: 1.5em; z-index: 100; border-radius: 10px; }
 
         /* 表單樣式 */
         #registrationForm { margin-top: 30px; padding: 20px; border: 1px dashed #007bff; border-radius: 5px; }
-        input[type="text"], input[type="tel"] { padding: 10px; margin: 5px 0 15px; width: 80%; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="text"], input[type="tel"] { padding: 10px; margin: 5px 0 15px; width: 80%; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
         #reserveButton { background-color: #28a745; color: white; padding: 12px 25px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
         #reserveButton:disabled { background-color: #6c757d; cursor: not-allowed; }
         #reserveButton:hover:not(:disabled) { background-color: #218838; }
@@ -58,36 +59,26 @@
         <div class="classroom">
             <div class="stage">講 臺</div>
             
-            <div style="display: flex;" id="seatLayout">
+            <div style="display: flex; align-items: flex-start;" id="seatLayout">
                 <div class="seat-area">
-                    <p>A 區 (靠窗)</p>
-                    <div class="seat-row" id="row-A1"></div>
-                    <div class="seat-row" id="row-A2"></div>
-                    <div class="seat-row" id="row-A3"></div>
-                    <div class="seat-row" id="row-A4"></div>
-                </div>
+                    <div class="seat-row" id="row-L-0"></div> <div class="seat-row" id="row-L-1"></div> <div class="seat-row" id="row-L-2"></div> <div class="seat-row" id="row-L-3"></div> <div class="seat-row" id="row-L-4"></div> <div class="seat-row" id="row-L-5"></div> </div>
 
-                <div class="aisle">走道</div>
+                <div class="aisle" style="height: 300px;"></div>
 
                 <div class="seat-area">
-                    <p>B 區 (靠門)</p>
-                    <div class="seat-row" id="row-B1"></div>
-                    <div class="seat-row" id="row-B2"></div>
-                    <div class="seat-row" id="row-B3"></div>
-                    <div class="seat-row" id="row-B4"></div>
-                </div>
+                    <div class="seat-row" id="row-R-0"></div> <div class="seat-row" id="row-R-1"></div> <div class="seat-row" id="row-R-2"></div> <div class="seat-row" id="row-R-3"></div> <div class="seat-row" id="row-R-4"></div> </div>
             </div>
         </div>
 
         <div id="registrationForm">
             <h2>報名確認</h2>
-            <p id="selected-seat-display" style="font-size: 1.2em;">您選擇的座位：<span style="color: red;">請點擊座位進行選擇</span></p>
+            <p id="selected-seat-display" style="font-size: 1.2em;">您選擇的座位：<span style="color: red; font-weight: bold;">請點擊座位進行選擇</span></p>
             
             <label for="studentName">學生姓名:</label><br>
-            <input type="text" id="studentName" required><br>
+            <input type="text" id="studentName" placeholder="請輸入真實姓名" required><br>
             
             <label for="contact">聯絡電話:</label><br>
-            <input type="tel" id="contact" required><br><br>
+            <input type="tel" id="contact" placeholder="請輸入手機號碼" required><br><br>
             
             <button id="reserveButton" disabled>確認報名並鎖定座位</button>
             <p id="message" style="color: #007bff;"></p>
@@ -97,22 +88,29 @@
     <script>
         // --- JavaScript 邏輯 ---
         
-        // 🚨 1. 核心設定：已替換成您部署的 Web App URL 🚨
+        // 🚨 這裡已經填入您提供的 Web App URL 🚨
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyEPxrgSkdVYigP8XKIU4NBg8JUo4jd1_YsbmS__zp6NeDADtk15zrDxP_bfoSLsa5ppQ/exec'; 
-        const MAX_SEATS = 36; // 總座位數上限
         
-        // 座位配置清單 (A 區 4x4, B 區 4x5)
-        const SEAT_MAP_A = [
-            ['A1', 'A2', 'A3', 'A4'],
-            ['A5', 'A6', 'A7', 'A8'],
-            ['A9', 'A10', 'A11', 'A12'],
-            ['A13', 'A14', 'A15', 'A16']
+        // 更新後的總座位數
+        const MAX_SEATS = 39; 
+        
+        // 左側座位配置 (A1-F4)
+        const SEAT_MAP_LEFT = [
+            ['A1', 'A2', 'A3', 'A4'], // id: row-L-0
+            ['B1', 'B2', 'B3', 'B4'], // id: row-L-1
+            ['C1', 'C2', 'C3', 'C4'], // id: row-L-2
+            ['D1', 'D2', 'D3', 'D4'], // id: row-L-3
+            ['E1', 'E2', 'E3', 'E4'], // id: row-L-4
+            ['F1', 'F2', 'F3', 'F4']  // id: row-L-5
         ];
-        const SEAT_MAP_B = [
-            ['B1', 'B2', 'B3', 'B4', 'B5'],
-            ['B6', 'B7', 'B8', 'B9', 'B10'],
-            ['B11', 'B12', 'B13', 'B14', 'B15'],
-            ['B16', 'B17', 'B18', 'B19', 'B20']
+
+        // 右側座位配置 (A5-E7)
+        const SEAT_MAP_RIGHT = [
+            ['A5', 'A6', 'A7'], // id: row-R-0
+            ['B5', 'B6', 'B7'], // id: row-R-1
+            ['C5', 'C6', 'C7'], // id: row-R-2
+            ['D5', 'D6', 'D7'], // id: row-R-3
+            ['E5', 'E6', 'E7']  // id: row-R-4
         ];
 
         let occupiedSeats = [];
@@ -120,39 +118,30 @@
 
         // --- 函式：繪製座位圖 ---
         function drawSeats() {
-            // 清空舊的座位
-            document.getElementById('row-A1').innerHTML = '';
-            document.getElementById('row-A2').innerHTML = '';
-            document.getElementById('row-A3').innerHTML = '';
-            document.getElementById('row-A4').innerHTML = '';
-            document.getElementById('row-B1').innerHTML = '';
-            document.getElementById('row-B2').innerHTML = '';
-            document.getElementById('row-B3').innerHTML = '';
-            document.getElementById('row-B4').innerHTML = '';
-
             // 輔助函式：將座位添加到指定行
-            function addSeatsToRow(map, rowId, rowNum) {
-                const rowElement = document.getElementById(rowId);
-                map[rowNum].forEach(seatId => {
-                    const seatDiv = document.createElement('div');
-                    seatDiv.className = 'seat';
-                    seatDiv.id = seatId;
-                    seatDiv.innerText = seatId;
-                    rowElement.appendChild(seatDiv);
+            function addSeatsToContainer(map, prefix) {
+                map.forEach((rowSeats, index) => {
+                    const rowId = `${prefix}-${index}`;
+                    const rowElement = document.getElementById(rowId);
+                    
+                    // 清空內容以防重複繪製
+                    if(rowElement) {
+                        rowElement.innerHTML = ''; 
+                        rowSeats.forEach(seatId => {
+                            const seatDiv = document.createElement('div');
+                            seatDiv.className = 'seat';
+                            seatDiv.id = seatId;
+                            seatDiv.innerText = seatId;
+                            rowElement.appendChild(seatDiv);
+                        });
+                    }
                 });
             }
 
-            // 繪製 A 區
-            addSeatsToRow(SEAT_MAP_A, 'row-A1', 0);
-            addSeatsToRow(SEAT_MAP_A, 'row-A2', 1);
-            addSeatsToRow(SEAT_MAP_A, 'row-A3', 2);
-            addSeatsToRow(SEAT_MAP_A, 'row-A4', 3);
-
-            // 繪製 B 區
-            addSeatsToRow(SEAT_MAP_B, 'row-B1', 0);
-            addSeatsToRow(SEAT_MAP_B, 'row-B2', 1);
-            addSeatsToRow(SEAT_MAP_B, 'row-B3', 2);
-            addSeatsToRow(SEAT_MAP_B, 'row-B4', 3);
+            // 繪製左區
+            addSeatsToContainer(SEAT_MAP_LEFT, 'row-L');
+            // 繪製右區
+            addSeatsToContainer(SEAT_MAP_RIGHT, 'row-R');
 
             setupSeatListeners();
         }
@@ -163,6 +152,7 @@
             const reserveButton = document.getElementById('reserveButton');
 
             seats.forEach(seat => {
+                // 重置狀態
                 seat.classList.remove('occupied', 'selected');
                 seat.onclick = null; 
 
@@ -184,7 +174,7 @@
                         // 設定新的選擇
                         selectedSeat = seat;
                         selectedSeat.classList.add('selected');
-                        document.getElementById('selected-seat-display').innerHTML = `您選擇的座位：<span style="color: green;">${seat.id}</span>`;
+                        document.getElementById('selected-seat-display').innerHTML = `您選擇的座位：<span style="color: green; font-weight: bold; font-size: 1.3em;">${seat.id}</span>`;
                         reserveButton.disabled = false;
                         document.getElementById('message').innerText = ''; 
                     });
@@ -207,7 +197,7 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error('API 獲取失敗: ' + response.statusText);
+                    throw new Error('API 獲取失敗');
                 }
 
                 const data = await response.json();
@@ -221,7 +211,7 @@
                 drawSeats(); 
 
             } catch (error) {
-                document.getElementById('message').innerText = '載入座位數據失敗，請檢查 Web App URL 或權限。錯誤: ' + error.message;
+                document.getElementById('message').innerText = '載入座位數據失敗: ' + error.message;
             } finally {
                 document.getElementById('loadingOverlay').style.display = 'none';
             }
@@ -252,12 +242,13 @@
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     mode: 'cors',
-                    headers: { 'Content-Type': 'text/plain' },
+                    // 🚨 這裡保留了針對 "Failed to fetch" 的修復 🚨
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 });
                 
                 if (!response.ok) {
-                     throw new Error('API 提交失敗: ' + response.statusText);
+                     throw new Error('API 提交失敗');
                 }
 
                 const result = await response.json();
@@ -292,8 +283,5 @@
 
     </script>
 </body>
-
 </html>
-
-
 
