@@ -252,7 +252,7 @@
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
                     mode: 'cors',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 });
                 
@@ -294,5 +294,6 @@
 </body>
 
 </html>
+
 
 
