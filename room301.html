@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>301 教室 - 課程報名</title>
+    <style>
+        /* --- CSS 樣式 --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 850px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); }
+        h1 { color: #2c3e50; margin-bottom: 10px; }
+        .subtitle { color: #7f8c8d; margin-bottom: 30px; font-size: 0.9em; }
+        
+        .classroom { display: inline-block; padding: 20px; border: 3px solid #e0e0e0; border-radius: 8px; background-color: #fafafa; }
+        .stage { background-color: #34495e; color: white; padding: 10px; margin-bottom: 30px; font-weight: bold; border-radius: 4px; letter-spacing: 5px; }
+        .aisle { width: 50px; margin: 0 15px; display: flex; align-items: center; justify-content: center; color: #bdc3c7; font-weight: bold; writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 5px; }
+
+        .seat-row { display: flex; justify-content: center; margin-bottom: 10px; }
+        .seat {
+            width: 45px; height: 45px; line-height: 45px; 
+            margin: 4px; border: 2px solid #3498db; 
+            cursor: pointer; font-size: 15px; font-weight: bold;
+            background-color: #ecf0f1; border-radius: 8px;
+            transition: all 0.2s; color: #2c3e50;
+        }
+        .seat:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .seat.occupied { background-color: #e74c3c; color: white; border-color: #c0392b; cursor: not-allowed; pointer-events: none; }
+        .seat.selected { background-color: #f1c40f; color: #fff; border-color: #f39c12; transform: scale(1.1); box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); }
+        
+        #registrationForm { margin-top: 30px; padding-top: 20px; border-top: 2px dashed #eee; }
+        input { padding: 12px; margin: 8px 0; width: 80%; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        button { background-color: #27ae60; color: white; padding: 12px 30px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s; }
+        button:hover:not(:disabled) { background-color: #219150; }
+        button:disabled { background-color: #95a5a6; cursor: not-allowed; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 999; font-size: 1.5rem; color: #34495e; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>301 教室 - 座位表</h1>
+        <p class="subtitle">請點選座位進行報名 (共 39 席)</p>
+        <div class="loading-overlay" id="loadingOverlay">資料讀取中...</div>
+
+        <div class="classroom">
+            <div class="stage">講 臺</div>
+            <div style="display: flex; justify-content: center;">
+                
+                <div id="left-area"></div>
+
+                <div class="aisle">走道</div>
+
+                <div id="right-area"></div>
+            </div>
+        </div>
+
+        <div id="registrationForm">
+            <h3 id="selected-seat-display">請先選擇上方座位</h3>
+            <input type="text" id="studentName" placeholder="請輸入學生姓名" required><br>
+            <input type="tel" id="contact" placeholder="請輸入聯絡電話" required><br>
+            <button id="reserveButton" disabled>確認報名</button>
+            <p id="message"></p>
+        </div>
+    </div>
+
+    <script>
+        // 🚨 已經幫您填入新的 301 教室 Web App 網址 🚨
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxuliRQVJW1KObPyI9brYS0LpKJc57xn1IcC0xYUhBQ0-E-EAOd64x2CI1rj0EwMOouCw/exec'; 
+
+        const MAX_SEATS = 39; 
+
+        // 左側座位配置 (A1-F4, 共6排)
+        const SEAT_MAP_LEFT = [
+            ['A1', 'A2', 'A3', 'A4'],
+            ['B1', 'B2', 'B3', 'B4'],
+            ['C1', 'C2', 'C3', 'C4'],
+            ['D1', 'D2', 'D3', 'D4'],
+            ['E1', 'E2', 'E3', 'E4'],
+            ['F1', 'F2', 'F3', 'F4']
+        ];
+
+        // 右側座位配置 (A5-E7, 共5排)
+        const SEAT_MAP_RIGHT = [
+            ['A5', 'A6', 'A7'],
+            ['B5', 'B6', 'B7'],
+            ['C5', 'C6', 'C7'],
+            ['D5', 'D6', 'D7'],
+            ['E5', 'E6', 'E7']
+        ];
+
+        let occupiedSeats = [];
+        let selectedSeat = null;
+
+        function renderSeats() {
+            function createRow(map, containerId) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                map.forEach(row => {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'seat-row';
+                    row.forEach(id => {
+                        const seat = document.createElement('div');
+                        seat.className = 'seat';
+                        seat.id = id;
+                        seat.innerText = id;
+                        if (occupiedSeats.includes(id)) seat.classList.add('occupied');
+                        
+                        seat.onclick = () => {
+                            if (seat.classList.contains('occupied')) return;
+                            if (selectedSeat) selectedSeat.classList.remove('selected');
+                            selectedSeat = seat;
+                            seat.classList.add('selected');
+                            document.getElementById('selected-seat-display').innerText = `已選擇座位：${id}`;
+                            document.getElementById('selected-seat-display').style.color = '#e67e22';
+                            document.getElementById('reserveButton').disabled = false;
+                        };
+                        rowDiv.appendChild(seat);
+                    });
+                    container.appendChild(rowDiv);
+                });
+            }
+            createRow(SEAT_MAP_LEFT, 'left-area');
+            createRow(SEAT_MAP_RIGHT, 'right-area');
+        }
+
+        async function loadData() {
+            try {
+                const res = await fetch(WEB_APP_URL);
+                const data = await res.json();
+                occupiedSeats = data.occupied;
+                renderSeats();
+            } catch (e) {
+                alert('連線錯誤，請檢查網址或網路狀態');
+            } finally {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        document.getElementById('reserveButton').onclick = async () => {
+            if (!selectedSeat) return;
+            const name = document.getElementById('studentName').value;
+            const contact = document.getElementById('contact').value;
+            if (!name || !contact) return alert('請填寫完整資料');
+
+            document.getElementById('reserveButton').disabled = true;
+            document.getElementById('reserveButton').innerText = '報名中...';
+
+            try {
+                await fetch(WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ seat: selectedSeat.id, name, contact })
+                });
+                alert(`${name} 報名成功！`);
+                location.reload();
+            } catch (e) {
+                alert('報名失敗，請稍後再試');
+                document.getElementById('reserveButton').disabled = false;
+            }
+        };
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
